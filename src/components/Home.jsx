@@ -3,24 +3,36 @@ import { Link } from 'react-router-dom';
 import './Home.css';
 
 export default function Home() {
-  const [searchTerm, setSearchTerm] = useState('Avengers');
+  const [searchTerm, setSearchTerm] = useState('Kung Fu Panda');
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const categories = ['Avengers', 'Batman', 'Animated', 'Spider-Man', 'Harry Potter'];
+  const categories = [
+    'Kung Fu Panda', 
+    'The Lion King', 
+    'Madagascar', 
+    'Zootopia', 
+    'Ice Age', 
+    'Finding Nemo', 
+    'Garfield', 
+    'Paddington'
+  ];
 
   const fetchMovies = async (query) => {
     if (!query) return;
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`https://www.omdbapi.com/?s=${query}&apikey=trilogy`);
+      const response = await fetch(`https://www.omdbapi.com/?s=${query}&type=movie&apikey=trilogy`);
       const data = await response.json();
       if (data.Response === 'True') {
-        setMovies(data.Search);
+        const validMovies = data.Search.filter(
+          (movie) => movie.Poster && movie.Poster !== 'N/A'
+        );
+        setMovies(validMovies);
       } else {
-        setError(data.Error);
+        setError('No cartoon movies found. Try another search!');
         setMovies([]);
       }
     } catch (err) {
@@ -30,7 +42,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchMovies('Avengers');
+    fetchMovies('Kung Fu Panda');
   }, []);
 
   const handleSearch = (e) => {
@@ -38,13 +50,20 @@ export default function Home() {
     fetchMovies(searchTerm);
   };
 
+  const handleImageError = (e) => {
+    e.target.style.display = 'none';
+  };
+
   return (
     <div className="home-container">
-      {/* Search Bar */}
+      <h2 style={{ textAlign: 'center', color: '#ffb703', marginBottom: '20px' }}>
+        Fun Animated & Animal Movies
+      </h2>
+
       <form onSubmit={handleSearch} className="search-form">
         <input
           type="text"
-          placeholder="Search movies (e.g. Inception, Lion King)..."
+          placeholder="Search cartoons (e.g. Tom and Jerry, Rio)..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
@@ -54,7 +73,6 @@ export default function Home() {
         </button>
       </form>
 
-      {/* Category Buttons */}
       <div className="category-container">
         {categories.map((cat) => (
           <button
@@ -67,24 +85,21 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Loading & Error */}
-      {loading && <h3 className="status-text">Searching movies...</h3>}
+      {loading && <h3 className="status-text">Searching fun movies...</h3>}
       {error && <h3 className="error-text">{error}</h3>}
 
-      {/* Grid */}
       <div className="movies-grid">
         {!loading && movies.map((movie) => (
           <Link to={`/movie/${movie.imdbID}`} key={movie.imdbID} className="movie-card-link">
             <div className="movie-card">
-              <img
-                src={movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/300x450?text=No+Poster'}
-                alt={movie.Title}
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'https://via.placeholder.com/300x450?text=No+Poster';
-                }}
-                className="movie-poster"
-              />
+              {movie.Poster && movie.Poster !== 'N/A' && (
+                <img
+                  src={movie.Poster}
+                  alt={movie.Title}
+                  className="movie-poster"
+                  onError={handleImageError}
+                />
+              )}
               <div className="movie-info">
                 <h4 className="movie-title">{movie.Title}</h4>
                 <small className="movie-year">{movie.Year}</small>
